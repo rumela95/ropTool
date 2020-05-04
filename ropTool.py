@@ -7,8 +7,11 @@ class ropTool:
 	def __init__(self, binary, data_address = ''):
 		self.binary = binary
 		self.code = ["chain = ''",]
-		self.gadget = {}
-		self.data_address = data_address
+		self.gadget = self.getGadget()
+		if not data_address:
+			data_address = self.getDataSection()
+		else:
+			self.data_address = data_address
 		self.payload = b''
 		self.gadget_used=[]
 
@@ -64,6 +67,8 @@ class ropTool:
 						total_garbage +=2
 						return total_garbage
 
+		return int(total_garbage)
+
 
 
 	def set_reg(self,data,mode,rax = 0, rsi = 0, rdx = 0, rdi = 0, rcx = 0 , rbp = 0, rsp = 0):
@@ -93,12 +98,16 @@ class ropTool:
 					self.payload += p64(int(g,16))
 					self.gadget_used.append(self.gadgets[g])
 					flag += 1
-			if flag != 1:
+			if flag == 0:
 				aux = self.getAuxGadget(reg)
 				# search aux gadgets
+				if aux == 0:
+					raise Exception('No gadgets found!')
 
 		if data != '' and mode == 1:
 			p = data
+			if(len(data)>8):
+				raise Exception("word size allowed is 8")
 			self.code.append("chain += b'" + str(data.decode())  + (8-len(data))*'\x00' + "'")
 			self.payload += data + (8-len(data))*b'\x00'
 			flag += 1
@@ -115,7 +124,6 @@ class ropTool:
 					flag += 1
 		else:
 			raise Exception('No value assigned!')			
-		# rax = rsi = rdx = 0
 		if aux != 0:
 			for p in range(aux):
 				self.code.append("chain += p64(0x41414141)")
@@ -165,6 +173,20 @@ class ropTool:
 	def getUsedGadget(self):
 		return self.gadget_used
 
+	def printUsedGadgets(self):
+		print("===========Used Gadget=======")
+		for u in self.gadget_used:
+			print(u)
+
+	def printROPcode(self):
+		print("===========ROP chain=======")
+		for u in self.code:
+			print(u)
+
+	def printPayload(self):
+		print("===========Payload=======")
+		print(self.payload)
+
 	def doSyscall(self, id):
 		flag = 0;
 		s,p = self.set_reg(rax=1,data=int(id,16),mode=2)
@@ -186,6 +208,10 @@ class ropTool:
 				self.code.append("chain += p64(" + address + ")")
 				self.payload += p64(int(address,16))
 				self.gadget_used.append(self.gadgets[address])
+				flag = 1
+				break
+		if flag!=1:
+			raise Exception('No syscall gadgets found!')
 		return self.code, self.payload
 
 
