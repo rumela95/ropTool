@@ -1,24 +1,24 @@
 # ropTool
 A python module to build ROP chains
 
-Installation Guide: \n
+# Installation Guide: 
 python3
 pwntools
-ROPgadget:
+# ROPgadget:
   pip install ropgadget
-ropper:
+# ropper:
   pip install ropper
-invoke:
+# invoke:
   pip install invoke
   
--------Test---------
+# -------Test---------
 from ropTool import*
 rop=ropTool('toomanybirds1')
 code,payload = rop.set_arg(b'hello',mode=1,rax=1)
 rop.printROPcode()
 
-------Test2----------
+# ------Test2----------
 python3 test.py
 
------Test3------
+# -----Test3------
 python3 test2.py
